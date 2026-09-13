@@ -1,0 +1,39 @@
+# 依赖目录
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# 构建产物
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 日志
+*.log
+logs/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# Docker
+.docker/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+
+# 轨迹文件夹
+轨迹/

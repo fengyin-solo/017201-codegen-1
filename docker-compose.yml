@@ -1,0 +1,14 @@
+services:
+  frontend-user:
+    build:
+      context: ./frontend-user
+      dockerfile: Dockerfile
+    container_name: jiabei-dashboard
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
