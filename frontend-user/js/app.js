@@ -11,6 +11,9 @@ class App {
         if (this.initialized) return;
         this.initialized = true;
 
+        // 初始化报告目录导航（先于数据渲染，就绪状态由 observer 自动跟踪）
+        window.reportNav.init();
+
         // 初始化组件
         window.componentRenderer.init();
 
@@ -55,7 +58,10 @@ class App {
             window.componentRenderer.renderMatrix();
             window.componentRenderer.renderQuickWins();
             window.chartManager.resize();
-            
+
+            // 数据重绘后重新检测导航项就绪态与当前高亮
+            window.reportNav.refresh();
+
             window.toast.success('刷新完成', '数据已更新');
         }, 1000);
     }
