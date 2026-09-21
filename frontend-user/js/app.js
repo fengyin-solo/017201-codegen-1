@@ -18,11 +18,20 @@ class App {
         window.chartManager.initFunnelChart('funnelChart');
         window.chartManager.initRadarChart('radarChart');
 
+        // 图表 canvas 插入后，刷新目录就绪状态并按当前滚动位置恢复高亮
+        window.reportNavigator.refresh();
+        window.reportNavigator.restorePosition();
+
+        // 字体/资源加载完成后布局可能变化，再次校准高亮项
+        window.addEventListener('load', () => {
+            window.reportNavigator.refresh();
+        });
+
         // 监听窗口大小变化
         window.addEventListener('resize', this.handleResize.bind(this));
 
         // 监听滚动
-        window.addEventListener('scroll', this.handleScroll.bind(this));
+        window.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
 
         console.log('🚀 Dashboard initialized successfully');
     }
@@ -49,13 +58,18 @@ class App {
     // 刷新数据
     refresh() {
         window.toast.info('刷新中', '正在重新加载数据...');
-        
+
+        // 数据重渲期间，目录项先回到“加载中”，防止跳到空白区块
+        window.reportNavigator.markLoading();
+
         setTimeout(() => {
+            window.componentRenderer.renderSummary();
             window.componentRenderer.renderStats();
             window.componentRenderer.renderMatrix();
             window.componentRenderer.renderQuickWins();
             window.chartManager.resize();
-            
+
+            window.reportNavigator.refresh();
             window.toast.success('刷新完成', '数据已更新');
         }, 1000);
     }

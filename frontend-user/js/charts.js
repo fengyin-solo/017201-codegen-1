@@ -7,10 +7,26 @@ class ChartManager {
         this.charts = {};
     }
 
+    // ECharts CDN 加载失败时的兜底：避免图表区成为空白区块
+    _renderUnavailable(container, name) {
+        if (!container) return;
+        container.innerHTML = `
+            <div class="chart-unavailable">
+                <div class="chart-unavailable-icon">📉</div>
+                <div class="chart-unavailable-text">「${name}」图表组件加载失败，请检查网络后刷新</div>
+            </div>
+        `;
+        container.classList.add('is-unavailable');
+    }
+
     // 初始化漏斗图
     initFunnelChart(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+        if (typeof echarts === 'undefined') {
+            this._renderUnavailable(container, 'AARRR 漏斗分析');
+            return;
+        }
 
         const chart = echarts.init(container);
         this.charts.funnel = chart;
@@ -84,6 +100,10 @@ class ChartManager {
     initRadarChart(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+        if (typeof echarts === 'undefined') {
+            this._renderUnavailable(container, '会员运营能力雷达图');
+            return;
+        }
 
         const chart = echarts.init(container);
         this.charts.radar = chart;

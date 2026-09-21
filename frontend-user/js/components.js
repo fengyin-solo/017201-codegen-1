@@ -23,6 +23,78 @@ class ComponentRenderer {
         type();
     }
 
+    // 渲染页内诊断摘要区块
+    renderSummary() {
+        const container = document.getElementById('summaryGrid');
+        if (!container) return;
+
+        const d = diagnosticSummary;
+        let html = '<div class="summary-positions">';
+        html += `
+            <div class="sidebar-position-card is-current summary-position-card">
+                <div class="sidebar-position-header">
+                    <div class="sidebar-position-label" style="color: ${d.currentPosition.color}">${d.currentPosition.label}</div>
+                    <div class="sidebar-position-subtitle">${d.currentPosition.subtitle}</div>
+                </div>
+                <div class="sidebar-score-bar">
+                    <div class="sidebar-score-fill is-red" style="width: ${d.currentPosition.score}%"></div>
+                </div>
+                <div class="sidebar-position-desc">${d.currentPosition.description}</div>
+            </div>
+            <div class="sidebar-position-card is-target summary-position-card">
+                <div class="sidebar-position-header">
+                    <div class="sidebar-position-label" style="color: ${d.targetPosition.color}">${d.targetPosition.label}</div>
+                    <div class="sidebar-position-subtitle">${d.targetPosition.subtitle}</div>
+                </div>
+                <div class="sidebar-score-bar">
+                    <div class="sidebar-score-fill is-green" style="width: ${d.targetPosition.score}%"></div>
+                </div>
+                <div class="sidebar-gap-badge">⚠️ ${d.targetPosition.gap}</div>
+            </div>
+        `;
+        html += '</div>';
+
+        html += '<div class="summary-arrow" aria-hidden="true">⬇ 跨越断层路径 ⬇</div>';
+        html += '<div class="summary-gaps">';
+        const gapTargets = ['charts', 'matrix', 'quickwins'];
+        d.keyGaps.forEach((gap, i) => {
+            const sevClass = gap.severity === 'critical' ? 'is-critical' : 'is-high';
+            html += `
+                <div class="sidebar-gap-card ${sevClass}" data-nav-target="${gapTargets[i] || gapTargets[0]}">
+                    <div class="sidebar-gap-header">
+                        <span class="sidebar-gap-icon">${gap.icon}</span>
+                        <span class="sidebar-gap-title">${gap.title}</span>
+                        <span class="sidebar-gap-severity ${sevClass}">${gap.severity === 'critical' ? '严重' : '高'}</span>
+                    </div>
+                    <div class="sidebar-gap-metric">
+                        <span class="sidebar-gap-metric-value">${gap.metric}</span>
+                        <span class="sidebar-gap-metric-label">${gap.metricLabel}</span>
+                    </div>
+                    <div class="sidebar-gap-desc">${gap.description}</div>
+                </div>
+            `;
+        });
+        html += '</div>';
+
+        container.innerHTML = html;
+
+        // 分数条入场动画
+        requestAnimationFrame(() => {
+            container.querySelectorAll('.sidebar-score-fill').forEach(el => {
+                const w = el.style.width;
+                el.style.width = '0%';
+                requestAnimationFrame(() => { el.style.width = w; });
+            });
+        });
+
+        // 点击断层卡片，通过目录导航统一跳转（会先校验区块是否就绪）
+        container.querySelectorAll('.sidebar-gap-card[data-nav-target]').forEach(card => {
+            card.addEventListener('click', () => {
+                window.reportNavigator.navigateTo(card.dataset.navTarget);
+            });
+        });
+    }
+
     // 渲染统计卡片
     renderStats() {
         const container = document.getElementById('statsGrid');
@@ -222,14 +294,8 @@ class ComponentRenderer {
                 sidebar.classList.remove('open');
                 toggle.style.opacity = '1';
                 toggle.style.pointerEvents = 'auto';
-                const targets = ['.charts-section', '.matrix-section', '.quickwins-section'];
-                const target = document.querySelector(targets[i] || targets[0]);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    target.style.transition = 'box-shadow 0.5s ease';
-                    target.style.boxShadow = '0 0 40px rgba(168, 85, 247, 0.5)';
-                    setTimeout(() => { target.style.boxShadow = ''; }, 2000);
-                }
+                const targets = ['charts', 'matrix', 'quickwins'];
+                window.reportNavigator.navigateTo(targets[i] || targets[0]);
             });
         });
     }
@@ -304,8 +370,12 @@ class ComponentRenderer {
 
     // 初始化所有组件
     init() {
+        // 先初始化报告目录导航（导航项在区块就绪前显示“加载中”）
+        window.reportNavigator.init();
+
         this.createParticles();
         this.startTypewriter();
+        this.renderSummary();
         this.renderStats();
         this.renderMatrix();
         this.renderQuickWins();
